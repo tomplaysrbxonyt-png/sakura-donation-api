@@ -1,18 +1,20 @@
 import express from "express";
 import fetch from "node-fetch";
 import { createCanvas, loadImage } from "canvas";
-import FormData from "form-data";  // ❗ Ajout de form-data pour le multipart
+import FormData from "form-data";
 
 const app = express();
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
+
+// Background local
 const BACKGROUND = "./background.png";
 
-const headshotURL = id =>
-  `https://www.roblox.com/headshot-thumbnail/image?userId=${id}&width=150&height=150&format=png`;
-
-async function getName(id) {
+// ----------------------
+// GET ROBLOX NAME
+// ----------------------
+async function getRobloxName(id) {
   try {
     const res = await fetch(`https://users.roblox.com/v1/users/${id}`);
     const data = await res.json();
@@ -22,23 +24,60 @@ async function getName(id) {
   }
 }
 
+// ----------------------
+// GET ROBLOX AVATAR (HEADSHOT)
+// API FIABLE SUR RENDER !
+// ----------------------
+async function getHeadshot(id) {
+  try {
+    const res = await fetch(
+      `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${id}&size=150x150&format=Png`
+    );
+    const data = await res.json();
+
+    if (!data.data || !data.data[0] || !data.data[0].imageUrl) {
+      console.error("❌ Headshot introuvable pour id:", id);
+      return null;
+    }
+
+    return data.data[0].imageUrl;
+  } catch (err) {
+    console.error("❌ Erreur fetch headshot:", err);
+    return null;
+  }
+}
+
 app.post("/render", async (req, res) => {
   const { donorId, receiverId, amount, webhook } = req.body;
 
   try {
-    const donorName = await getName(donorId);
-    const receiverName = await getName(receiverId);
+    console.log("➡️ Requête reçue", req.body);
 
-    const avatarDonor = await loadImage(headshotURL(donorId));
-    const avatarReceiver = await loadImage(headshotURL(receiverId));
+    const donorName = await getRobloxName(donorId);
+    const receiverName = await getRobloxName(receiverId);
+
+    const donorHeadshotURL = await getHeadshot(donorId);
+    const receiverHeadshotURL = await getHeadshot(receiverId);
+
+    if (!donorHeadshotURL || !receiverHeadshotURL) {
+      console.error("❌ Avatar non chargé !");
+      return res.status(500).json({ error: "Unable to load Roblox avatar" });
+    }
+
+    // Chargement des images
     const background = await loadImage(BACKGROUND);
+    const avatarDonor = await loadImage(donorHeadshotURL);
+    const avatarReceiver = await loadImage(receiverHeadshotURL);
 
+    // ---------------------
+    // CREATION CANVAS
+    // ---------------------
     const canvas = createCanvas(800, 350);
     const ctx = canvas.getContext("2d");
 
     ctx.drawImage(background, 0, 0, 800, 350);
 
-    // Avatar donateur
+    // Donor avatar (cercle)
     ctx.save();
     ctx.beginPath();
     ctx.arc(150, 175, 80, 0, Math.PI * 2);
@@ -46,7 +85,7 @@ app.post("/render", async (req, res) => {
     ctx.drawImage(avatarDonor, 70, 95, 160, 160);
     ctx.restore();
 
-    // Avatar receveur
+    // Receiver avatar (cercle)
     ctx.save();
     ctx.beginPath();
     ctx.arc(650, 175, 80, 0, Math.PI * 2);
@@ -58,49 +97,60 @@ app.post("/render", async (req, res) => {
     ctx.font = "38px Arial";
     ctx.fillStyle = "white";
     ctx.textAlign = "center";
-    ctx.fillText(`@${donorName} donated ${amount} to @${receiverName}`, 400, 175);
+    ctx.fillText(
+      `@${donorName} donated ${amount} to @${receiverName}`,
+      400,
+      170
+    );
 
-    // Pseudos en dessous
+    // Noms en dessous
     ctx.font = "28px Arial";
     ctx.fillText(`@${donorName}`, 150, 300);
     ctx.fillText(`@${receiverName}`, 650, 300);
 
     const buffer = canvas.toBuffer("image/png");
 
-    // Création du formulaire multipart
+    // ----------------------
+    // ENVOI À DISCORD (MULTIPART)
+    // ----------------------
     const form = new FormData();
+
+    form.append(
+      "payload_json",
+      JSON.stringify({
+        content: "", // Tu peux mettre un texte si tu veux
+      })
+    );
+
     form.append("file", buffer, {
       filename: "donation.png",
       contentType: "image/png"
     });
 
-    // Optionnel : tu peux ajouter un content / embed JSON ici dans payload_json
-    const payload = {
-      content: "",         // message texte si tu veux
-      embeds: [],          // ou des embeds si tu veux
-      // tu peux ajouter d'autres champs si besoin
-    };
-    form.append("payload_json", JSON.stringify(payload));
-
-    // Envoi au webhook
-    const resp = await fetch(webhook, {
+    const webhookResp = await fetch(webhook, {
       method: "POST",
       body: form,
       headers: form.getHeaders()
     });
 
-    if (!resp.ok) {
-      console.error("Discord webhook responded:", resp.status, await resp.text());
-      return res.status(500).json({ error: "Discord webhook failed", status: resp.status });
+    if (!webhookResp.ok) {
+      console.error("❌ Discord webhook error:", webhookResp.status);
+      console.error(await webhookResp.text());
+      return res.status(500).json({
+        error: "Discord webhook failed",
+        status: webhookResp.status
+      });
     }
 
+    console.log("✅ Image envoyée à Discord !");
     res.json({ success: true });
+
   } catch (err) {
-    console.error("Error in render:", err);
-    res.status(500).json({ error: "Internal error", details: err.toString() });
+    console.error("🔥 ERREUR SERVER :", err);
+    res.status(500).json({ error: "Server error", details: err.toString() });
   }
 });
 
-app.listen(PORT, () => {
-  console.log("API running on port", PORT);
-});
+// Serveur OK
+app.listen(PORT, () => console.log("🚀 API running on port", PORT));
+
