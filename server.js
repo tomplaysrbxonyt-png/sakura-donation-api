@@ -137,4 +137,3 @@ app.post("/render", async (req, res) => {
 });
 
 app.listen(PORT, () => console.log("🔥 Stylized API running on port", PORT));
-
