@@ -1,13 +1,14 @@
 import express from "express";
 import fetch from "node-fetch";
 import { createCanvas, loadImage } from "canvas";
+import FormData from "form-data";
 
 const app = express();
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
 
-// Background
+// Background file
 const BACKGROUND = "./background.png";
 
 // Roblox headshot URL
@@ -41,7 +42,6 @@ app.post("/render", async (req, res) => {
 
     ctx.drawImage(background, 0, 0, 800, 350);
 
-    // Donor avatar
     ctx.save();
     ctx.beginPath();
     ctx.arc(150, 175, 80, 0, Math.PI * 2);
@@ -49,7 +49,6 @@ app.post("/render", async (req, res) => {
     ctx.drawImage(avatarDonor, 70, 95, 160, 160);
     ctx.restore();
 
-    // Receiver avatar
     ctx.save();
     ctx.beginPath();
     ctx.arc(650, 175, 80, 0, Math.PI * 2);
@@ -57,7 +56,6 @@ app.post("/render", async (req, res) => {
     ctx.drawImage(avatarReceiver, 570, 95, 160, 160);
     ctx.restore();
 
-    // Main text
     ctx.font = "38px Arial";
     ctx.fillStyle = "white";
     ctx.textAlign = "center";
@@ -67,27 +65,24 @@ app.post("/render", async (req, res) => {
       175
     );
 
-    // Usernames
     ctx.font = "28px Arial";
     ctx.fillText(`@${donorName}`, 150, 300);
     ctx.fillText(`@${receiverName}`, 650, 300);
 
-    const buffer = canvas.toBuffer("image/png");
+    const image = canvas.toBuffer("image/png");
+
+    // Create multipart/form-data
+    const form = new FormData();
+    form.append("payload_json", JSON.stringify({ content: "" }));
+    form.append("file", image, {
+      filename: "donation.png",
+      contentType: "image/png",
+    });
 
     // Send to webhook
     await fetch(webhook, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        content: "",
-        embeds: [],
-        files: [
-          {
-            name: "donation.png",
-            attachment: buffer.toString("base64")
-          }
-        ]
-      })
+      body: form,
     });
 
     res.json({ success: true });
