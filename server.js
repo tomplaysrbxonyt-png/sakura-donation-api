@@ -1,21 +1,17 @@
 import express from "express";
 import fetch from "node-fetch";
 import { createCanvas, loadImage } from "canvas";
-import FormData from "form-data";
+import FormData from "form-data";  // ❗ Ajout de form-data pour le multipart
 
 const app = express();
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
-
-// Background file
 const BACKGROUND = "./background.png";
 
-// Roblox headshot URL
-const headshotURL = (id) =>
+const headshotURL = id =>
   `https://www.roblox.com/headshot-thumbnail/image?userId=${id}&width=150&height=150&format=png`;
 
-// Fetch Roblox name
 async function getName(id) {
   try {
     const res = await fetch(`https://users.roblox.com/v1/users/${id}`);
@@ -42,6 +38,7 @@ app.post("/render", async (req, res) => {
 
     ctx.drawImage(background, 0, 0, 800, 350);
 
+    // Avatar donateur
     ctx.save();
     ctx.beginPath();
     ctx.arc(150, 175, 80, 0, Math.PI * 2);
@@ -49,6 +46,7 @@ app.post("/render", async (req, res) => {
     ctx.drawImage(avatarDonor, 70, 95, 160, 160);
     ctx.restore();
 
+    // Avatar receveur
     ctx.save();
     ctx.beginPath();
     ctx.arc(650, 175, 80, 0, Math.PI * 2);
@@ -56,40 +54,53 @@ app.post("/render", async (req, res) => {
     ctx.drawImage(avatarReceiver, 570, 95, 160, 160);
     ctx.restore();
 
+    // Texte principal
     ctx.font = "38px Arial";
     ctx.fillStyle = "white";
     ctx.textAlign = "center";
-    ctx.fillText(
-      `@${donorName} donated ${amount} to @${receiverName}`,
-      400,
-      175
-    );
+    ctx.fillText(`@${donorName} donated ${amount} to @${receiverName}`, 400, 175);
 
+    // Pseudos en dessous
     ctx.font = "28px Arial";
     ctx.fillText(`@${donorName}`, 150, 300);
     ctx.fillText(`@${receiverName}`, 650, 300);
 
-    const image = canvas.toBuffer("image/png");
+    const buffer = canvas.toBuffer("image/png");
 
-    // Create multipart/form-data
+    // Création du formulaire multipart
     const form = new FormData();
-    form.append("payload_json", JSON.stringify({ content: "" }));
-    form.append("file", image, {
+    form.append("file", buffer, {
       filename: "donation.png",
-      contentType: "image/png",
+      contentType: "image/png"
     });
 
-    // Send to webhook
-    await fetch(webhook, {
+    // Optionnel : tu peux ajouter un content / embed JSON ici dans payload_json
+    const payload = {
+      content: "",         // message texte si tu veux
+      embeds: [],          // ou des embeds si tu veux
+      // tu peux ajouter d'autres champs si besoin
+    };
+    form.append("payload_json", JSON.stringify(payload));
+
+    // Envoi au webhook
+    const resp = await fetch(webhook, {
       method: "POST",
       body: form,
+      headers: form.getHeaders()
     });
+
+    if (!resp.ok) {
+      console.error("Discord webhook responded:", resp.status, await resp.text());
+      return res.status(500).json({ error: "Discord webhook failed", status: resp.status });
+    }
 
     res.json({ success: true });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Error rendering image." });
+    console.error("Error in render:", err);
+    res.status(500).json({ error: "Internal error", details: err.toString() });
   }
 });
 
-app.listen(PORT, () => console.log("API running"));
+app.listen(PORT, () => {
+  console.log("API running on port", PORT);
+});
