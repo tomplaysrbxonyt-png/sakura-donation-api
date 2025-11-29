@@ -1,0 +1,11 @@
+{
+  "name": "sakura-donation-renderer",
+  "version": "1.0.0",
+  "main": "server.js",
+  "type": "module",
+  "dependencies": {
+    "canvas": "^2.11.2",
+    "express": "^4.18.2",
+    "node-fetch": "^3.3.2"
+  }
+}
