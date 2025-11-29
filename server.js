@@ -9,7 +9,7 @@ app.use(express.json());
 const PORT = process.env.PORT || 3000;
 const BACKGROUND = "./background.png";
 
-// Roblox helpers
+// Helpers Roblox
 async function getRobloxName(id) {
   try {
     const res = await fetch(`https://users.roblox.com/v1/users/${id}`);
@@ -26,7 +26,7 @@ async function getHeadshot(id) {
   } catch { return null; }
 }
 
-// Draw avatar with neon glow
+// Draw avatar with glow
 function drawAvatar(ctx, x, y, radius, avatar, glowColor = "#6C43FF") {
   ctx.save();
   ctx.shadowColor = glowColor;
@@ -45,18 +45,26 @@ function drawAvatar(ctx, x, y, radius, avatar, glowColor = "#6C43FF") {
   ctx.stroke();
 }
 
-// Draw main text with neon gradient and outline
+// Draw main text with black banner and neon gradient
 function drawMainText(ctx, text, x, y, canvasWidth) {
   ctx.save();
-  ctx.font = `bold ${Math.floor(canvasWidth * 0.05)}px Arial`;
+  const fontSize = Math.floor(canvasWidth * 0.05);
+  ctx.font = `bold ${fontSize}px Arial`;
   ctx.textAlign = "center";
 
-  // Outline
+  // Draw black banner behind text
+  const metrics = ctx.measureText(text);
+  const paddingX = 20;
+  const paddingY = fontSize * 0.4;
+  ctx.fillStyle = "rgba(0,0,0,0.8)";
+  ctx.fillRect(x - metrics.width / 2 - paddingX, y - fontSize + paddingY, metrics.width + paddingX*2, fontSize + paddingY);
+
+  // Outline for neon text
   ctx.lineWidth = 6;
   ctx.strokeStyle = "rgba(0,0,0,0.7)";
   ctx.strokeText(text, x, y);
 
-  // Gradient neon
+  // Gradient neon fill
   const gradient = ctx.createLinearGradient(x - canvasWidth * 0.25, y - 10, x + canvasWidth * 0.25, y + 10);
   gradient.addColorStop(0, "#FF00FF");
   gradient.addColorStop(0.5, "#6C43FF");
@@ -89,35 +97,25 @@ app.post("/render", async (req, res) => {
     // Draw background
     ctx.drawImage(background, 0, 0, width, height);
 
-    // Proportional positions
-    const donorX = width * 0.1875; // 150/800
-    const donorY = height * 0.714; // 250/350
-    const receiverX = width * 0.8125; // 650/800
+    // Calculate positions proportionally
+    const avatarRadius = Math.floor(width * 0.1);
+    const donorX = width * 0.1875;
+    const donorY = height * 0.55;
+    const receiverX = width * 0.8125;
     const receiverY = donorY;
 
-    const mainTextY = height * 0.47; // 165/350
-    const donorTextY = height * 0.95; // sous avatars
-    const receiverTextY = donorTextY;
+    const mainTextY = height * 0.3; // Text above avatars
+    const donorTextY = donorY + avatarRadius + 40;
+    const receiverTextY = receiverY + avatarRadius + 40;
 
-    const bannerX = width * 0.1875;
-    const bannerY = height * 0.371;
-    const bannerWidth = width * 0.625;
-    const bannerHeight = height * 0.143;
-
-    const avatarRadius = Math.floor(width * 0.1); // proportionnel
-
-    // Bandeau derrière texte (translucide)
-    ctx.fillStyle = "rgba(0,0,0,0.4)";
-    ctx.fillRect(bannerX, bannerY, bannerWidth, bannerHeight);
-
-    // Texte principal
-    drawMainText(ctx, `donated ${amount} to`, width / 2, mainTextY, width);
-
-    // Avatars
+    // Draw avatars
     drawAvatar(ctx, donorX, donorY, avatarRadius, donorAvatar, "#6C43FF");
     drawAvatar(ctx, receiverX, receiverY, avatarRadius, receiverAvatar, "#FF00FF");
 
-    // Pseudos sous avatars
+    // Draw main text with black banner
+    drawMainText(ctx, `donated ${amount} to`, width / 2, mainTextY, width);
+
+    // Draw usernames below avatars
     ctx.font = `${Math.floor(width * 0.035)}px Arial`;
     ctx.fillStyle = "#FFFFFF";
     ctx.shadowColor = "rgba(0,0,0,0.8)";
@@ -143,9 +141,4 @@ app.post("/render", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log("🚀 Clean proportional donation API running on port", PORT));
-
-
-
-
-
+app.listen(PORT, () => console.log("🚀 Donation API final stylé et proportionnel running on port", PORT));
