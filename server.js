@@ -12,7 +12,7 @@ const BACKGROUND = "./background.png";
 // Récupère le pseudo Roblox
 async function getRobloxName(id) {
   try {
-    const res = await fetch(`https://users.roblox.com/v1/users/${id}`);
+    const res = await fetch(`https://users.roblox.com/v1/users/${id}`
     const data = await res.json();
     return data.name || "Unknown";
   } catch {
@@ -26,7 +26,7 @@ async function getHeadshot(id) {
     const url = `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${id}&size=150x150&format=Png`;
     const res = await fetch(url);
     const data = await res.json();
-    return data.data[0].imageUrl;
+    return data.data[0].
   } catch {
     return null;
   }
@@ -132,8 +132,8 @@ app.post("/render", async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     console.error("Render error:", err);
-    res.status(500).json({ error: "Server crashed", details: err });
-  }
+    res.status(500).json({ error: "Serv
 });
 
 app.listen(PORT, () => console.log("🔥 Stylized API running on port", PORT));
+
