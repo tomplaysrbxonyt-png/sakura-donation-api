@@ -12,7 +12,7 @@ const BACKGROUND = "";
 // Récupère le pseudo Roblox
 async function getRobloxName(id) {
   try {
-    const res = await fetch(`https://users.roblox.com/v1/users/${id}`);
+    const res = await fetch(`https://users.roblox.com/v1/users/${id}`
     const data = await res.json();
     return data.name || "Unknown";
   } catch {
@@ -50,7 +50,7 @@ app.post("/render", async (req, res) => {
     const receiverAvatar = await loadImage(receiverURL);
     const background = await loadImage(BACKGROUND);
 
-    const canvas = createCanvas(800, 350);
+    const canvas = createCanvas(50, 50);
     const ctx = canvas.getContext("2d");
 
     // Arrière-plan
@@ -137,5 +137,6 @@ app.post("/render", async (req, res) => {
 });
 
 app.listen(PORT, () => console.log("🔥 Stylized API running on port", PORT));
+
 
 
