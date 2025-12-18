@@ -1,8 +1,3 @@
-import express from "express";
-import fetch from "node-fetch";
-import { createCanvas, loadImage } from "canvas";
-import FormData from "form-data";
-
 const app = express();
 app.use(express.json());
 
@@ -137,3 +132,4 @@ app.post("/render", async (req, res) => {
 });
 
 app.listen(PORT, () => console.log("🔥 Stylized API running on port", PORT));
+
