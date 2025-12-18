@@ -1,8 +1,13 @@
+import express from "express";
+import fetch from "node-fetch";
+import { createCanvas, loadImage } from "canvas";
+import FormData from "form-data";
+
 const app = express();
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
-const BACKGROUND = "./background.png";
+const BACKGROUND = "";
 
 // Récupère le pseudo Roblox
 async function getRobloxName(id) {
@@ -132,4 +137,5 @@ app.post("/render", async (req, res) => {
 });
 
 app.listen(PORT, () => console.log("🔥 Stylized API running on port", PORT));
+
 
