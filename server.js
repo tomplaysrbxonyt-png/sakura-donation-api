@@ -1,7 +1,7 @@
 const app = express();
 app.use(express.json());
 
-const PORT = process.env.PORT || 3000;
+
 const BACKGROUND = "./background.png";
 
 // Récupère le pseudo Roblox
@@ -28,7 +28,7 @@ async function getHeadshot(id) {
 }
 
 app.post("/render", async (req, res) => {
-  const { donorId, receiverId, amount, webhook } = req.body;
+
 
   try {
     const donorName = await getRobloxName(donorId);
@@ -132,4 +132,5 @@ app.post("/render", async (req, res) => {
 });
 
 app.listen(PORT, () => console.log("🔥 Stylized API running on port", PORT));
+
 
