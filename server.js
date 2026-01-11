@@ -7,7 +7,7 @@ const BACKGROUND = "./background.png";
 // Récupère le pseudo Roblox
 async function getRobloxName(id) {
   try {
-    const res = await fetch(`https://users.roblox.com/v1/users/${id}`);
+    
     const data = await res.json();
     return data.name || "Unknown";
   } catch {
@@ -77,8 +77,7 @@ app.post("/render", async (req, res) => {
       ctx.stroke();
     }
 
-    drawAvatar(150, 175, donorAvatar);
-    drawAvatar(650, 175, receiverAvatar);
+  
 
     // Texte principal stylé sans pseudo
     ctx.font = "bold 44px Arial";
@@ -127,6 +126,7 @@ app.post("/render", async (req, res) => {
 });
 
 app.listen(PORT, () => console.log("🔥 Stylized API running on port", PORT));
+
 
 
 
