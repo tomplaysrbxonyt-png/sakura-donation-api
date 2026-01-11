@@ -41,12 +41,7 @@ app.post("/render", async (req, res) => {
       return res.status(500).json({ error: "Failed to load headshots" });
     }
 
-    const donorAvatar = await loadImage(donorURL);
-    const receiverAvatar = await loadImage(receiverURL);
-    const background = await loadImage(BACKGROUND);
 
-    const canvas = createCanvas(800, 350);
-    const ctx = canvas.getContext("2d");
 
     // Arrière-plan
     ctx.drawImage(background, 0, 0, 800, 350);
@@ -132,5 +127,6 @@ app.post("/render", async (req, res) => {
 });
 
 app.listen(PORT, () => console.log("🔥 Stylized API running on port", PORT));
+
 
 
