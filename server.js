@@ -2,7 +2,7 @@ const app = express();
 app.use(express.json());
 
 
-const BACKGROUND = "./background.png";
+
 
 // Récupère le pseudo Roblox
 async function getRobloxName(id) {
@@ -18,7 +18,7 @@ async function getRobloxName(id) {
 // Récupère un headshot Roblox fiable
 async function getHeadshot(id) {
   try {
-    const url = `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${id}&size=150x150&format=Png`;
+   
     const res = await fetch(url);
     const data = await res.json();
     return data.data[0].imageUrl;
@@ -30,16 +30,6 @@ async function getHeadshot(id) {
 app.post("/render", async (req, res) => {
 
 
-  try {
-    const donorName = await getRobloxName(donorId);
-    const receiverName = await getRobloxName(receiverId);
-
-    const donorURL = await getHeadshot(donorId);
-    const receiverURL = await getHeadshot(receiverId);
-
-    if (!donorURL || !receiverURL) {
-      return res.status(500).json({ error: "Failed to load headshots" });
-    }
 
 
 
@@ -126,6 +116,7 @@ app.post("/render", async (req, res) => {
 });
 
 app.listen(PORT, () => console.log("🔥 Stylized API running on port", PORT));
+
 
 
 
